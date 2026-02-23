@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CNPS Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        nav {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        nav h1 { font-size: 24px; margin-bottom: 10px; }
+        nav p { font-size: 14px; margin-bottom: 10px; }
+        nav a {
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        nav a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .card h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .card a {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin: 10px 10px 10px 0;
+        }
+        .card a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>CNPS User Access Control</h1>
+        <p>Welcome, <strong>{{ user.username }}</strong> ({{ user.role.name }})</p>
+        <a href="{{ url_for('auth.logout') }}">Logout</a>
+    </nav>
+    <div class="container">
+        <div class="card">
+            <h3>Dashboard</h3>
+            <p>Welcome to the CNPS User Access Control and Privilege Audit Application.</p>
+        </div>
+        
+        {% if user.role.name in ['Admin', 'Auditor'] %}
+        <div class="card">
+            <h3>Administration</h3>
+            <a href="{{ url_for('main.audit_logs') }}">View Audit Logs</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
