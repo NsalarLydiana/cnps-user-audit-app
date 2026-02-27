@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audit Logs - CNPS User Audit Control</title>
+    <title>Users - CNPS User Audit Control</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -47,35 +47,14 @@
         .table tbody tr:hover {
             background: #f8f9fa;
         }
-        .badge-success {
-            background: #27ae60;
+        .badge {
+            padding: 6px 10px;
+            border-radius: 15px;
+            font-size: 12px;
         }
-        .badge-danger {
-            background: #e74c3c;
-        }
-        .badge-warning {
-            background: #f39c12;
-        }
-        .badge-info {
-            background: #3498db;
-        }
-        .filter-section {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        .btn-primary {
-            background: #667eea;
-            border: none;
-        }
-        .btn-primary:hover {
-            background: #764ba2;
+        .btn-sm {
+            font-size: 12px;
+            padding: 5px 10px;
         }
     </style>
 </head>
@@ -114,79 +93,67 @@
     <!-- Main Content -->
     <div class="container-fluid mt-4">
         <h2 class="mb-4">
-            <i class="fas fa-file-alt"></i> Audit Logs
+            <i class="fas fa-users"></i> User Management
         </h2>
 
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Username</label>
-                    <input type="text" class="form-control" name="username" placeholder="Filter by username" value="{{ username_filter }}">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Action</label>
-                    <input type="text" class="form-control" name="action" placeholder="Filter by action" value="{{ action_filter }}">
-                </div>
-                <div class="col-md-4 d-flex align-items-end gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-filter"></i> Filter
-                    </button>
-                    <a href="/audit-logs" class="btn btn-secondary">
-                        <i class="fas fa-redo"></i> Reset
-                    </a>
-                </div>
-            </form>
-        </div>
-
-        <!-- Logs Table -->
+        <!-- Users Table -->
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">System Activity Log</h5>
+                <h5 class="mb-0">All Users</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Timestamp</th>
                                 <th>Username</th>
-                                <th>Action</th>
-                                <th>Status</th>
-                                <th>IP Address</th>
-                                <th>Details</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>2FA Status</th>
+                                <th>Created</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% if logs.items %}
-                                {% for log in logs.items %}
+                            {% if users.items %}
+                                {% for user in users.items %}
                                     <tr>
+                                        <td><strong>{{ user.username }}</strong></td>
+                                        <td><small>{{ user.email }}</small></td>
                                         <td>
-                                            <small>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
-                                        </td>
-                                        <td><strong>{{ log.username }}</strong></td>
-                                        <td>
-                                            <code>{{ log.action }}</code>
+                                            <span class="badge bg-info">{{ user.role.name }}</span>
                                         </td>
                                         <td>
-                                            {% if log.status == 'success' %}
-                                                <span class="badge badge-success">✓ Success</span>
+                                            {% if user.is_2fa_enabled %}
+                                                <span class="badge bg-success">✓ Enabled</span>
                                             {% else %}
-                                                <span class="badge badge-danger">✗ Failed</span>
+                                                <span class="badge bg-warning">⚠ Disabled</span>
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <small>{{ log.ip_address if log.ip_address else 'N/A' }}</small>
+                                            <small>{{ user.created_at.strftime('%Y-%m-%d') }}</small>
                                         </td>
                                         <td>
-                                            <small class="text-muted">{{ log.details if log.details else '-' }}</small>
+                                            <small>
+                                                {% if user.last_login %}
+                                                    {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                                                {% else %}
+                                                    Never
+                                                {% endif %}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#userModal{{ user.id }}">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
                                         </td>
                                     </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">
-                                        No audit logs found
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        No users found
                                     </td>
                                 </tr>
                             {% endif %}
@@ -195,24 +162,24 @@
                 </div>
 
                 <!-- Pagination -->
-                {% if logs.pages > 1 %}
+                {% if users.pages > 1 %}
                     <nav aria-label="Page navigation" class="mt-4">
                         <ul class="pagination justify-content-center">
-                            {% if logs.has_prev %}
+                            {% if users.has_prev %}
                                 <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('main.audit_logs', page=logs.prev_num, username=username_filter, action=action_filter) }}">Previous</a>
+                                    <a class="page-link" href="{{ url_for('main.users', page=users.prev_num) }}">Previous</a>
                                 </li>
                             {% endif %}
 
-                            {% for page_num in logs.iter_pages() %}
+                            {% for page_num in users.iter_pages() %}
                                 {% if page_num %}
-                                    {% if page_num == logs.page %}
+                                    {% if page_num == users.page %}
                                         <li class="page-item active">
                                             <span class="page-link">{{ page_num }}</span>
                                         </li>
                                     {% else %}
                                         <li class="page-item">
-                                            <a class="page-link" href="{{ url_for('main.audit_logs', page=page_num, username=username_filter, action=action_filter) }}">{{ page_num }}</a>
+                                            <a class="page-link" href="{{ url_for('main.users', page=page_num) }}">{{ page_num }}</a>
                                         </li>
                                     {% endif %}
                                 {% else %}
@@ -222,9 +189,9 @@
                                 {% endif %}
                             {% endfor %}
 
-                            {% if logs.has_next %}
+                            {% if users.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('main.audit_logs', page=logs.next_num, username=username_filter, action=action_filter) }}">Next</a>
+                                    <a class="page-link" href="{{ url_for('main.users', page=users.next_num) }}">Next</a>
                                 </li>
                             {% endif %}
                         </ul>

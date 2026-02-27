@@ -22,10 +22,10 @@ class ADAuthenticator:
             conn = Connection(self.server, user=upn, password=password)
             
             if conn.bind():
-                logger.info(f"AD authentication successful for user: {username}")
+                logger.info(f"✓ AD authentication successful for user: {username}")
                 return True, {"username": username, "upn": upn}
             else:
-                logger.warning(f"AD authentication failed for user: {username}")
+                logger.warning(f"✗ AD authentication failed for user: {username}")
                 return False, None
         
         except Exception as e:
@@ -38,11 +38,12 @@ class ADAuthenticator:
             conn = Connection(
                 self.server,
                 user=current_app.config['LDAP_BIND_DN'],
-                password=current_app.config['LDAP_BIND_PASSWORD']
+                password=current_app.config['LDAP_BIND_PASSWORD'],
+                raise_exceptions=False
             )
             
             if not conn.bind():
-                logger.error("Failed to bind as admin")
+                logger.error(f"Failed to bind as admin: {conn.last_error}")
                 return None
             
             search_filter = f"(sAMAccountName={username})"
@@ -54,23 +55,45 @@ class ADAuthenticator:
             
             if conn.entries:
                 entry = conn.entries[0]
+                print(f"[DEBUG] User found: {entry.entry_dn}")
+                
                 groups = []
                 if hasattr(entry, 'memberOf') and entry.memberOf.values:
                     groups = [str(g) for g in entry.memberOf.values]
+                    print(f"[DEBUG] Groups found: {groups}")
+                else:
+                    print(f"[DEBUG] No groups found for {username}")
                 
+                # ROLE DETECTION FROM AD GROUPS
                 role = 'Standard User'
-                if any('CNPS_Admins' in group for group in groups):
-                    role = 'Admin'
-                elif any('CNPS_Auditors' in group for group in groups):
-                    role = 'Auditor'
                 
-                return {
+                # Check for Admin group
+                for group in groups:
+                    if 'CNPS_Admins' in group:
+                        role = 'Admin'
+                        print(f"[DEBUG] ✓ {username} is ADMIN (found in CNPS_Admins)")
+                        break
+                
+                # Check for Auditor group (only if not Admin)
+                if role == 'Standard User':
+                    for group in groups:
+                        if 'CNPS_Auditors' in group:
+                            role = 'Auditor'
+                            print(f"[DEBUG] ✓ {username} is AUDITOR (found in CNPS_Auditors)")
+                            break
+                
+                if role == 'Standard User':
+                    print(f"[DEBUG] {username} assigned as Standard User")
+                
+                user_info = {
                     'username': username,
                     'email': str(entry.mail.value) if hasattr(entry, 'mail') and entry.mail.value else f"{username}@cnpslocal.local",
                     'display_name': str(entry.displayName.value) if hasattr(entry, 'displayName') and entry.displayName.value else username,
                     'groups': groups,
                     'role': role
                 }
+                
+                return user_info
             
             logger.warning(f"User not found in AD: {username}")
             return None

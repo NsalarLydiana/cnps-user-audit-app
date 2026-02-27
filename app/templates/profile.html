@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - CNPS User Audit Control</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 20px;
+            color: white !important;
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+        }
+        .nav-link:hover {
+            color: white !important;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            padding: 20px;
+        }
+        .btn-primary {
+            background: #667eea;
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            border: none;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .profile-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .info-row {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #333;
+        }
+        .info-value {
+            color: #666;
+        }
+        .badge {
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-lock"></i> CNPS UAC
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/auth/logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <div class="row">
+            <!-- Profile Card -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-user"></i> User Profile
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="profile-info">
+                            <div class="info-row">
+                                <span class="info-label">Username:</span>
+                                <span class="info-value">{{ user.username }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Email:</span>
+                                <span class="info-value">{{ user.email }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Role:</span>
+                                <span class="info-value">
+                                    <span class="badge bg-info">{{ user.role.name }}</span>
+                                </span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Account Created:</span>
+                                <span class="info-value">{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Last Login:</span>
+                                <span class="info-value">
+                                    {% if user.last_login %}
+                                        {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2FA Management -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-lock"></i> Two-Factor Authentication
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="profile-info">
+                            <div class="info-row">
+                                <span class="info-label">2FA Status:</span>
+                                <span class="info-value">
+                                    {% if user.is_2fa_enabled %}
+                                        <span class="badge bg-success">✓ Enabled</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">⚠ Disabled</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        {% if user.is_2fa_enabled %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 
+                                Your account is protected with Two-Factor Authentication. You will be asked to enter a code from your authenticator app every time you log in.
+                            </div>
+                            
+                            <form method="POST" action="/profile/reset-2fa" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reset 2FA? You will need to set it up again on your next login.')">
+                                    <i class="fas fa-refresh"></i> Reset 2FA
+                                </button>
+                            </form>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                Your account is not protected with Two-Factor Authentication. It is highly recommended to enable 2FA for better security.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Account Security -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-shield-alt"></i> Account Security
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Your account is secured through:</p>
+                        <ul>
+                            <li>✓ Active Directory authentication</li>
+                            <li>✓ Password policy enforcement</li>
+                            {% if user.is_2fa_enabled %}
+                                <li>✓ Two-Factor Authentication (2FA)</li>
+                            {% endif %}
+                            <li>✓ Comprehensive audit logging</li>
+                        </ul>
+                        <p class="text-muted mt-3">All your actions are logged for security and compliance purposes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Quick Links</h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="/dashboard" class="btn btn-primary btn-sm w-100 mb-2">
+                            <i class="fas fa-tachometer-alt"></i> Back to Dashboard
+                        </a>
+                        <a href="/auth/logout" class="btn btn-danger btn-sm w-100">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Need Help?</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">
+                            For security issues or account problems, please contact your system administrator.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
